@@ -40,12 +40,15 @@ namespace AMF
 
 	void ModifyMovementDataHandler::CharacterEx::Hook_ModifyMovementData(float a_delta, RE::NiPoint3& a_translation, RE::NiPoint3& a_rotation)
 	{
-		RevertPitchRotation(this, a_translation, a_rotation);
+		if (!this->IsPlayerRef())
+			RevertPitchRotation(this, a_translation, a_rotation);
+
+		return;
 	}
 
 	void ModifyMovementDataHandler::PlayerHook::ModifyMovementData(RE::PlayerCharacter* a_player, float a_delta, RE::NiPoint3& a_translation, RE::NiPoint3& a_rotation)
 	{
-		RevertPitchRotation(a_player, a_translation, a_rotation);
+		return;
 	}
 
 	void ModifyMovementDataHandler::PlayerHook::UpdateMagnetism(RE::PlayerCharacter* a_player, float a_delta, RE::NiPoint3& a_translation, float& a_rotationZ)
