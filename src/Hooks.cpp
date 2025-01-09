@@ -43,16 +43,17 @@ namespace AMF
 		if (!this->IsPlayerRef())
 			RevertPitchRotation(this, a_translation, a_rotation);
 
-		return;
+		return func(this, a_delta, a_translation, a_rotation);
 	}
 
-	void ModifyMovementDataHandler::PlayerHook::ModifyMovementData(RE::PlayerCharacter* a_player, float a_delta, RE::NiPoint3& a_translation, RE::NiPoint3& a_rotation)
+	void AttackMagnetismHandler::PlayerRotateMagnetismHook::UpdateMagnetism(RE::PlayerCharacter* a_player, float a_delta, RE::NiPoint3& a_translation, float& a_rotationZ)
 	{
 		return;
 	}
 
-	void ModifyMovementDataHandler::PlayerHook::UpdateMagnetism(RE::PlayerCharacter* a_player, float a_delta, RE::NiPoint3& a_translation, float& a_rotationZ)
+	bool AttackMagnetismHandler::MovementMagnetismHook::IsStartingMeleeAttack(RE::Actor* a_actor)
 	{
-		return;
+		return false;
 	}
+
 }

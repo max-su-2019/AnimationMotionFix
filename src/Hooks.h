@@ -2,7 +2,6 @@
 
 namespace AMF
 {
-
 	class ModifyMovementDataHandler
 	{
 		static bool IsMovementAnimationDriven_1405E3250(RE::Actor* a_actor);
@@ -26,7 +25,15 @@ namespace AMF
 		};
 		friend class CharacterEx;
 
-		class PlayerHook
+	private:
+		ModifyMovementDataHandler() = delete;
+		~ModifyMovementDataHandler() = delete;
+	};
+
+	class AttackMagnetismHandler
+	{
+	public:
+		struct PlayerRotateMagnetismHook
 		{
 		public:
 			static void InstallHook()
@@ -35,23 +42,37 @@ namespace AMF
 				auto& trampoline = SKSE::GetTrampoline();
 
 				REL::Relocation<std::uintptr_t> Base{ REL::ID(39379) };  //1.5.97 14069f730
-				trampoline.write_branch<5>(Base.address() + 0x67, ModifyMovementData);
-				_UpdateMagnetism = trampoline.write_call<5>(Base.address() + 0x42, UpdateMagnetism);
+				func = trampoline.write_call<5>(Base.address() + 0x42, UpdateMagnetism);
 
 				INFO("{} Done!", __FUNCTION__);
 			}
 
 		private:
-			static void ModifyMovementData(RE::PlayerCharacter* a_player, float a_delta, RE::NiPoint3& a_arg3, RE::NiPoint3& a_arg4);
-
 			static void UpdateMagnetism(RE::PlayerCharacter* a_player, float a_delta, RE::NiPoint3& a_translation, float& a_rotationZ);
-			static inline REL::Relocation<decltype(UpdateMagnetism)> _UpdateMagnetism;
+			static inline REL::Relocation<decltype(UpdateMagnetism)> func;
 		};
-		friend class PlayerHook;
+
+		struct MovementMagnetismHook
+		{
+		public:
+			static void InstallHook()
+			{
+				SKSE::AllocTrampoline(1 << 5);
+				auto& trampoline = SKSE::GetTrampoline();
+
+				REL::Relocation<std::uintptr_t> Base{ REL::ID(36357) };  //1.5.97 1405D6FB0
+				func = trampoline.write_call<5>(Base.address() + 0x222, IsStartingMeleeAttack);
+
+				INFO("{} Done!", __FUNCTION__);
+			}
+
+		private:
+			static bool IsStartingMeleeAttack(RE::Actor* a_actor);
+			static inline REL::Relocation<decltype(IsStartingMeleeAttack)> func;
+		};
 
 	private:
-		ModifyMovementDataHandler() = delete;
-		~ModifyMovementDataHandler() = delete;
+		AttackMagnetismHandler() = delete;
+		~AttackMagnetismHandler() = delete;
 	};
-
 }
