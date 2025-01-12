@@ -2,7 +2,7 @@
 
 namespace AMF
 {
-	bool ModifyMovementDataHandler::IsMovementAnimationDriven_1405E3250(RE::Actor* a_actor)
+	bool IsMovementAnimationDriven_1405E3250(RE::Actor* a_actor)
 	{
 		using func_t = decltype(&IsMovementAnimationDriven_1405E3250);
 		REL::Relocation<func_t> func{ RELOCATION_ID(36487, 0) };
@@ -54,6 +54,28 @@ namespace AMF
 	bool AttackMagnetismHandler::MovementMagnetismHook::IsStartingMeleeAttack(RE::Actor* a_actor)
 	{
 		return false;
+	}
+
+	void AttackMagnetismHandler::PushCharacterHook::Hook_PushTargetCharacter(RE::bhkCharacterController* a_pusher, RE::bhkCharacterController* a_target, RE::hkContactPoint* a_contactPoint)
+	{
+		auto GetActor = [](RE::bhkCharacterController* a_charCtrl) -> RE::Actor* {
+			if (!a_charCtrl)
+				return nullptr;
+
+			auto rigidBoby = a_charCtrl->GetRigidBody();
+			auto objRef = rigidBoby ? rigidBoby->GetUserData() : nullptr;
+			return objRef ? objRef->As<RE::Actor>() : nullptr;
+		};
+
+		auto attacker = GetActor(a_pusher);
+		if (attacker && attacker->IsAttacking() && IsMovementAnimationDriven_1405E3250(attacker) && attacker->currentCombatTarget) {
+			auto targetActor = GetActor(a_target);
+			if (targetActor && targetActor == attacker->currentCombatTarget.get().get()) {
+				return;
+			}
+		}
+
+		func(a_pusher, a_target, a_contactPoint);
 	}
 
 }

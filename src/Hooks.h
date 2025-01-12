@@ -2,9 +2,10 @@
 
 namespace AMF
 {
+	static bool IsMovementAnimationDriven_1405E3250(RE::Actor* a_actor);
+
 	class ModifyMovementDataHandler
 	{
-		static bool IsMovementAnimationDriven_1405E3250(RE::Actor* a_actor);
 		static bool RevertPitchRotation(RE::Actor* a_actor, RE::NiPoint3& a_translation, RE::NiPoint3& a_rotation);
 
 	public:
@@ -71,8 +72,28 @@ namespace AMF
 			static inline REL::Relocation<decltype(IsStartingMeleeAttack)> func;
 		};
 
+		struct PushCharacterHook
+		{
+		public:
+			static void InstallHook()
+			{
+				SKSE::AllocTrampoline(1 << 5);
+				auto& trampoline = SKSE::GetTrampoline();
+
+				REL::Relocation<std::uintptr_t> Base{ REL::ID(77248) };  //1.5.97 140DEFBA0
+				func = trampoline.write_call<5>(Base.address() + 0x3F, Hook_PushTargetCharacter);
+
+				INFO("{} Done!", __FUNCTION__);
+			}
+
+		private:
+			static void Hook_PushTargetCharacter(RE::bhkCharacterController* a_pusher, RE::bhkCharacterController* a_target, RE::hkContactPoint* a_contactPoint);
+			static inline REL::Relocation<decltype(Hook_PushTargetCharacter)> func;
+		};
+
 	private:
 		AttackMagnetismHandler() = delete;
 		~AttackMagnetismHandler() = delete;
 	};
+
 }
