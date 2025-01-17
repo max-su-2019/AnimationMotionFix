@@ -30,6 +30,7 @@ DLLEXPORT bool SKSEAPI SKSEPlugin_Load(const SKSE::LoadInterface* a_skse)
 	INFO("{} v{} loaded", Plugin::NAME, Plugin::Version);
 
 	// do stuff
+	AMF::ConvertMovementDirectionHook::InstallHook();
 	AMF::ModifyMovementDataHandler::CharacterEx::InstallHook();
 	AMF::AttackMagnetismHandler::MovementMagnetismHook::InstallHook();
 	AMF::AttackMagnetismHandler::PushCharacterHook::InstallHook();

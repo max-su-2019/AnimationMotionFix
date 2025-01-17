@@ -9,7 +9,7 @@ namespace AMF
 		return func(a_actor);
 	}
 
-	bool ModifyMovementDataHandler::RevertPitchRotation(RE::Actor* a_actor, RE::NiPoint3& a_translation, RE::NiPoint3& a_rotation)
+	bool ConvertMovementDirectionHook::RevertPitchRotation(RE::Actor* a_actor, RE::NiPoint3& a_translation)
 	{
 		if (!a_actor)
 			return false;
@@ -28,6 +28,11 @@ namespace AMF
 
 		if (IsMovementAnimationDriven_1405E3250(a_actor) && (a_actor->IsAnimationDriven() || a_actor->IsAllowRotation())) {
 			auto pitchAngle = a_actor->data.angle.x;
+			if (std::abs(pitchAngle) > (std::numbers::pi / 2)) {
+				ERROR("Gimbal Lock Occured When Revert Pitch Rotation!");
+				return false;
+			}
+
 			auto nonPitchTranslationY = a_translation.y / cosf(pitchAngle);
 			auto nonPitchTranslationZ = a_translation.z - nonPitchTranslationY * sinf(pitchAngle);
 			a_translation.y = nonPitchTranslationY;
@@ -38,10 +43,38 @@ namespace AMF
 		return false;
 	}
 
+	void ConvertMovementDirectionHook::Hook_ConvertMoveDirToTranslation(RE::NiPoint3& a_movementDirection, RE::NiPoint3& a_translationData, RE::Actor* a_actor)
+	{
+		ConvertMoveDirToTranslation(a_movementDirection, a_translationData);
+		if (!a_actor->IsPlayerRef())
+			RevertPitchRotation(a_actor, a_translationData);
+	}
+
 	void ModifyMovementDataHandler::CharacterEx::Hook_ModifyMovementData(float a_delta, RE::NiPoint3& a_translation, RE::NiPoint3& a_rotation)
 	{
-		if (!this->IsPlayerRef())
-			RevertPitchRotation(this, a_translation, a_rotation);
+		auto selectedRef = RE::Console::GetSelectedRef();
+		static RE::NiPoint3 translationSum = RE::NiPoint3::Zero();
+		static RE::NiPoint3 startLoaction = RE::NiPoint3::Zero();
+		if (this == selectedRef.get()) {
+			if (this->IsStaggering()) {
+				translationSum += a_translation;
+				float Length = translationSum.Length();
+				RE::NiPoint3 angle = this->data.angle;
+				RE::NiPoint3 location = this->data.location;
+				RE::NiPoint3 locationChange = location - startLoaction;
+				float locationChangeDist = locationChange.Length();
+				int i = 1;
+			} else {
+				auto pitchAngle = this->data.angle.x;
+				float Length = translationSum.Length();
+				RE::NiPoint3 locationChange = this->data.location - startLoaction;
+				float locationChangeDist = locationChange.Length();
+				if (translationSum != RE::NiPoint3::Zero()) {
+					translationSum = RE::NiPoint3::Zero();
+				}
+				startLoaction = this->data.location;
+			}
+		}
 
 		return func(this, a_delta, a_translation, a_rotation);
 	}
