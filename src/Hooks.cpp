@@ -1,4 +1,5 @@
 #include "Hooks.h"
+#include "Settings.h"
 
 namespace AMF
 {
@@ -46,47 +47,25 @@ namespace AMF
 	void ConvertMovementDirectionHook::Hook_ConvertMoveDirToTranslation(RE::NiPoint3& a_movementDirection, RE::NiPoint3& a_translationData, RE::Actor* a_actor)
 	{
 		ConvertMoveDirToTranslation(a_movementDirection, a_translationData);
-		if (!a_actor->IsPlayerRef())
+		if (!a_actor->IsPlayerRef() && AMFSettings::GetSingleton()->enablePitchTranslationFix)
 			RevertPitchRotation(a_actor, a_translationData);
-	}
-
-	void ModifyMovementDataHandler::CharacterEx::Hook_ModifyMovementData(float a_delta, RE::NiPoint3& a_translation, RE::NiPoint3& a_rotation)
-	{
-		auto selectedRef = RE::Console::GetSelectedRef();
-		static RE::NiPoint3 translationSum = RE::NiPoint3::Zero();
-		static RE::NiPoint3 startLoaction = RE::NiPoint3::Zero();
-		if (this == selectedRef.get()) {
-			if (this->IsStaggering()) {
-				translationSum += a_translation;
-				float Length = translationSum.Length();
-				RE::NiPoint3 angle = this->data.angle;
-				RE::NiPoint3 location = this->data.location;
-				RE::NiPoint3 locationChange = location - startLoaction;
-				float locationChangeDist = locationChange.Length();
-				int i = 1;
-			} else {
-				auto pitchAngle = this->data.angle.x;
-				float Length = translationSum.Length();
-				RE::NiPoint3 locationChange = this->data.location - startLoaction;
-				float locationChangeDist = locationChange.Length();
-				if (translationSum != RE::NiPoint3::Zero()) {
-					translationSum = RE::NiPoint3::Zero();
-				}
-				startLoaction = this->data.location;
-			}
-		}
-
-		return func(this, a_delta, a_translation, a_rotation);
 	}
 
 	void AttackMagnetismHandler::PlayerRotateMagnetismHook::UpdateMagnetism(RE::PlayerCharacter* a_player, float a_delta, RE::NiPoint3& a_translation, float& a_rotationZ)
 	{
-		return;
+		if (!AMFSettings::GetSingleton()->disablePlayerRotationMagnetism) {
+			return func(a_player, a_delta, a_translation, a_rotationZ);
+		}
 	}
 
 	bool AttackMagnetismHandler::MovementMagnetismHook::IsStartingMeleeAttack(RE::Actor* a_actor)
 	{
-		return false;
+		auto settings = AMFSettings::GetSingleton();
+		if ((a_actor->IsPlayerRef() && settings->disablePlayerMovementMagnetism) || (!a_actor->IsPlayerRef() && settings->disableNpcMovementMagnetism)) {
+			return false;
+		}
+
+		return func(a_actor);
 	}
 
 	void AttackMagnetismHandler::PushCharacterHook::Hook_PushTargetCharacter(RE::bhkCharacterController* a_pusher, RE::bhkCharacterController* a_target, RE::hkContactPoint* a_contactPoint)

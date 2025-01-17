@@ -1,15 +1,12 @@
 ﻿#include "Hooks.h"
+#include "Settings.h"
 
 static void EventCallback(SKSE::MessagingInterface::Message* msg)
 {
 	using MES = SKSE::MessagingInterface;
 	switch (msg->type) {
 	case MES::kDataLoaded:
-		DEBUG("DataLoaded Message!");
-		if (auto setting = RE::INISettingCollection::GetSingleton()->GetSetting("bUseCharacterRB:HAVOK")) {
-			setting->data.b = false;
-		}
-
+		AMF::AMFSettings::GetSingleton()->OverrideGameSettings();
 		break;
 	}
 }
@@ -31,7 +28,6 @@ DLLEXPORT bool SKSEAPI SKSEPlugin_Load(const SKSE::LoadInterface* a_skse)
 
 	// do stuff
 	AMF::ConvertMovementDirectionHook::InstallHook();
-	AMF::ModifyMovementDataHandler::CharacterEx::InstallHook();
 	AMF::AttackMagnetismHandler::MovementMagnetismHook::InstallHook();
 	AMF::AttackMagnetismHandler::PushCharacterHook::InstallHook();
 	AMF::AttackMagnetismHandler::PlayerRotateMagnetismHook::InstallHook();

@@ -40,31 +40,6 @@ namespace AMF
 		static inline REL::Relocation<void (*)(RE::NiPoint3& a_movementDirection, RE::NiPoint3& a_translationData)> ConvertMoveDirToTranslation;
 	};
 
-	class ModifyMovementDataHandler
-	{
-	public:
-		class CharacterEx : public RE::Character
-		{
-		public:
-			static void InstallHook()
-			{
-				REL::Relocation<std::uintptr_t> CharacterVtbl{ VTABLE[0] };
-				func = CharacterVtbl.write_vfunc(0x11A, &Hook_ModifyMovementData);
-				INFO("{} Done!", __FUNCTION__);
-			}
-
-		private:
-			void Hook_ModifyMovementData(float a_delta, RE::NiPoint3& a_translation, RE::NiPoint3& a_rotation);
-
-			static inline REL::Relocation<decltype(&RE::Character::ModifyMovementData)> func;
-		};
-		friend class CharacterEx;
-
-	private:
-		ModifyMovementDataHandler() = delete;
-		~ModifyMovementDataHandler() = delete;
-	};
-
 	class AttackMagnetismHandler
 	{
 	public:
