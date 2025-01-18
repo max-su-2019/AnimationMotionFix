@@ -25,6 +25,10 @@ namespace AMF
 
 	void AMFSettings::OverrideGameSettings()
 	{
+		if (!disableNpcMovementMagnetism) {
+			return;
+		}
+
 		if (!bUseCharacterRB) {
 			static constexpr auto conflictDLLName = "DisableFollowerCollision.dll";
 			auto conflicPlugin = GetModuleHandleA(conflictDLLName);

@@ -29,7 +29,7 @@ namespace AMF
 
 		if (IsMovementAnimationDriven_1405E3250(a_actor) && (a_actor->IsAnimationDriven() || a_actor->IsAllowRotation())) {
 			auto pitchAngle = a_actor->data.angle.x;
-			if (std::abs(pitchAngle) > (std::numbers::pi / 2)) {
+			if (std::abs(pitchAngle) > 1.57079638f) {
 				ERROR("Gimbal Lock Occured When Revert Pitch Rotation!");
 				return false;
 			}
@@ -58,10 +58,15 @@ namespace AMF
 		}
 	}
 
-	bool AttackMagnetismHandler::MovementMagnetismHook::IsStartingMeleeAttack(RE::Actor* a_actor)
+	bool AttackMagnetismHandler::ShouldDisableMovementMagnetism(RE::Actor* a_actor)
 	{
 		auto settings = AMFSettings::GetSingleton();
-		if ((a_actor->IsPlayerRef() && settings->disablePlayerMovementMagnetism) || (!a_actor->IsPlayerRef() && settings->disableNpcMovementMagnetism)) {
+		return (a_actor->IsPlayerRef() && settings->disablePlayerMovementMagnetism) || (!a_actor->IsPlayerRef() && settings->disableNpcMovementMagnetism);
+	}
+
+	bool AttackMagnetismHandler::MovementMagnetismHook::IsStartingMeleeAttack(RE::Actor* a_actor)
+	{
+		if (ShouldDisableMovementMagnetism(a_actor)) {
 			return false;
 		}
 
@@ -80,7 +85,8 @@ namespace AMF
 		};
 
 		auto attacker = GetActor(a_pusher);
-		if (attacker && attacker->IsAttacking() && IsMovementAnimationDriven_1405E3250(attacker) && attacker->currentCombatTarget) {
+		if (attacker && ShouldDisableMovementMagnetism(attacker) &&
+			attacker->IsAttacking() && IsMovementAnimationDriven_1405E3250(attacker) && attacker->currentCombatTarget) {
 			auto targetActor = GetActor(a_target);
 			if (targetActor && targetActor == attacker->currentCombatTarget.get().get()) {
 				return;

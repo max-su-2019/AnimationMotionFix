@@ -42,6 +42,8 @@ namespace AMF
 
 	class AttackMagnetismHandler
 	{
+		static bool ShouldDisableMovementMagnetism(RE::Actor* a_actor);
+
 	public:
 		struct PlayerRotateMagnetismHook
 		{
@@ -78,6 +80,7 @@ namespace AMF
 
 		private:
 			static bool IsStartingMeleeAttack(RE::Actor* a_actor);
+
 			static inline REL::Relocation<decltype(IsStartingMeleeAttack)> func;
 		};
 
