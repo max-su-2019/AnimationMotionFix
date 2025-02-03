@@ -10,7 +10,7 @@ The vanilla game engine has used a wrong method to compute NPCs animation motion
 ![image1](./Slide1.png)
 ![image2](./Slide2.png)
 
-This issue usually occurs when NPCS are in combat since NPCS always adjusts their pitch angle during combat.
+This issue usually occurs when NPCs are in combat since NPCs always adjusts their pitch angle during combat.
 One of the most common case in vanilla is NPCs stagger animations would be markedly reduced after entered combat state.  
 To enable this fix, you need to have setting `EnablePitchTranslationFix` value be true in "AnimationMotionFix.ini".
  ```ini
@@ -31,3 +31,5 @@ DisablePlayerMovementMagnetism = true
 
 DisableNpcMovementMagnetism = true
 ```
+
+Be notice that NPC would able to push their combat target away during root motion attacking if you have `DisableNpcMovementMagnetism` setting set to true.

@@ -9,7 +9,6 @@ namespace AMF
 	class AMFSettings : public DKUtil::model::Singleton<AMFSettings>
 	{
 		friend DKUtil::model::Singleton<AMFSettings>;
-
 	private:
 		AMFSettings();
 
@@ -20,14 +19,10 @@ namespace AMF
 		}
 
 	public:
-		void OverrideGameSettings();
-
 		Boolean enablePitchTranslationFix{ "EnablePitchTranslationFix", "Fix" };
 
 		Boolean disablePlayerRotationMagnetism{ "DisablePlayerRotationMagnetism", "Tweak" };
 		Boolean disablePlayerMovementMagnetism{ "DisablePlayerMovementMagnetism", "Tweak" };
 		Boolean disableNpcMovementMagnetism{ "DisableNpcMovementMagnetism", "Tweak" };
-
-		Boolean bUseCharacterRB{ "bUseCharacterRB", "GameSettings" };
 	};
 }

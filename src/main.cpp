@@ -1,16 +1,6 @@
 ﻿#include "Hooks.h"
 #include "Settings.h"
 
-static void EventCallback(SKSE::MessagingInterface::Message* msg)
-{
-	using MES = SKSE::MessagingInterface;
-	switch (msg->type) {
-	case MES::kDataLoaded:
-		AMF::AMFSettings::GetSingleton()->OverrideGameSettings();
-		break;
-	}
-}
-
 DLLEXPORT bool SKSEAPI SKSEPlugin_Load(const SKSE::LoadInterface* a_skse)
 {
 #ifndef NDEBUG
@@ -27,18 +17,17 @@ DLLEXPORT bool SKSEAPI SKSEPlugin_Load(const SKSE::LoadInterface* a_skse)
 	INFO("{} v{} loaded", Plugin::NAME, Plugin::Version);
 
 	// do stuff
-	AMF::ConvertMovementDirectionHook::InstallHook();
-	AMF::AttackMagnetismHandler::MovementMagnetismHook::InstallHook();
-	AMF::AttackMagnetismHandler::PushCharacterHook::InstallHook();
+	AMF::AMFSettings::GetSingleton();
+
+	AMF::FixPitchTransHandler::InstallHook();
+
 	AMF::AttackMagnetismHandler::PlayerRotateMagnetismHook::InstallHook();
+	AMF::AttackMagnetismHandler::MovementMagnetismHook::InstallHook();
 
-	auto g_message = SKSE::GetMessagingInterface();
-	if (!g_message) {
-		ERROR("Messaging Interface Not Found!");
-		return false;
-	}
-
-	g_message->RegisterListener(EventCallback);
+	AMF::PushCharacterHandler::ProxyPushProxyHandler::InstallHook();
+	AMF::PushCharacterHandler::ProxyPushRigidBodyHandler::InstallHook();
+	AMF::PushCharacterHandler::RigidBodyPushProxyHandler::InstallHook();
+	AMF::PushCharacterHandler::RigidBodyPushRigidBodyHandler::InstallHook();
 
 	return true;
 }

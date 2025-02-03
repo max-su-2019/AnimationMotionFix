@@ -13,7 +13,7 @@ include(GNUInstallDirs)
 # info
 project(
 	AnimationMotionFix
-	VERSION 1.0.9
+	VERSION 1.1.0
 	LANGUAGES CXX
 )
 
