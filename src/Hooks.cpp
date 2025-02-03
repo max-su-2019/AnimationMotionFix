@@ -165,7 +165,6 @@ namespace AMF
 						a_input.constraints[i].velocity = { 0 };
 						WriteLocker(charCtrlContactPointsLock);
 						charCtrlContactPointsMap.emplace(rigidBodyChar, a_input.constraints[i].plane);
-						return;
 					}
 				}
 			}
