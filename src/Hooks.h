@@ -150,8 +150,8 @@ namespace AMF
 			using ReadLocker = std::shared_lock<Lock>;
 			using WriteLocker = std::unique_lock<Lock>;
 
-			static inline Lock charCtrlContactPointsLock;
-			static inline std::unordered_map<RE::bhkCharRigidBodyController*, RE::hkVector4> charCtrlContactPointsMap{};
+			static inline Lock charCtrlPlaneLock;
+			static inline std::unordered_map<RE::bhkCharRigidBodyController*, RE::hkVector4> charCtrlPlaneMap{};
 
 		public:
 			static void InstallHook()

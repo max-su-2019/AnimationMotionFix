@@ -163,8 +163,8 @@ namespace AMF
 					auto rigidBodyChar = attackerCharCtrl ? skyrim_cast<RE::bhkCharRigidBodyController*>(attackerCharCtrl) : nullptr;
 					if (rigidBodyChar) {
 						a_input.constraints[i].velocity = { 0 };
-						WriteLocker(charCtrlContactPointsLock);
-						charCtrlContactPointsMap.emplace(rigidBodyChar, a_input.constraints[i].plane);
+						WriteLocker(charCtrlPlaneLock);
+						charCtrlPlaneMap.emplace(rigidBodyChar, a_input.constraints[i].plane);
 					}
 				}
 			}
@@ -177,9 +177,9 @@ namespace AMF
 
 		auto rigidCharCtrl = a_charCtrl ? skyrim_cast<RE::bhkCharRigidBodyController*>(a_charCtrl) : nullptr;
 		if (rigidCharCtrl) {
-			WriteLocker(charCtrlContactPointsLock);
-			auto it = charCtrlContactPointsMap.find(rigidCharCtrl);
-			if (it != charCtrlContactPointsMap.end()) {
+			WriteLocker(charCtrlPlaneLock);
+			auto it = charCtrlPlaneMap.find(rigidCharCtrl);
+			if (it != charCtrlPlaneMap.end()) {
 				auto normal = it->second;
 				RE::hkVector4 currentVelocity;
 				rigidCharCtrl->GetLinearVelocityImpl(currentVelocity);
@@ -190,17 +190,17 @@ namespace AMF
 					rigidCharCtrl->SetLinearVelocityImpl(currentVelocity);
 				}
 
-				charCtrlContactPointsMap.erase(it);
+				charCtrlPlaneMap.erase(it);
 			}
 		}
 	}
 
 	void PushCharacterHandler::RigidBodyPushProxyHandler::Hook_DeleteThis(RE::bhkCharRigidBodyController* a_charCtrl)
 	{
-		WriteLocker(charCtrlContactPointsLock);
-		auto it = charCtrlContactPointsMap.find(a_charCtrl);
-		if (it != charCtrlContactPointsMap.end()) {
-			charCtrlContactPointsMap.erase(it);
+		WriteLocker(charCtrlPlaneLock);
+		auto it = charCtrlPlaneMap.find(a_charCtrl);
+		if (it != charCtrlPlaneMap.end()) {
+			charCtrlPlaneMap.erase(it);
 		}
 
 		DeleteThis(a_charCtrl);
@@ -216,12 +216,15 @@ namespace AMF
 
 	void PushCharacterHandler::RigidBodyPushRigidBodyHandler::Hook_ContactPointCallback(RE::FOCollisionListener* a_listener, const RE::hkpContactPointEvent& a_event)
 	{
-		if (a_event.firingCallbacksForFullManifold && a_event.separatingVelocity) {
-			auto attacker = GetActor(a_event.bodies[0]);
-			if (attacker) {
-				auto target = GetActor(a_event.bodies[1]);
-				if (target && ShouldPreventAttackPushing(attacker, target) && a_event.contactMgr && a_event.bodies[1]->simulationIsland) {
-					SetInvMassScalingForContact_140AA8740(a_event.contactMgr, a_event.bodies[1], *a_event.bodies[1]->simulationIsland, { 0 });
+		auto attacker = GetActor(a_event.bodies[0]);
+		if (attacker) {
+			auto target = GetActor(a_event.bodies[1]);
+			if (target && ShouldPreventAttackPushing(attacker, target) && a_event.contactMgr && a_event.bodies[1]->simulationIsland) {
+				a_event.bodies[1]->responseModifierFlags |= 1;  //MASS_SCALING = 1
+				SetInvMassScalingForContact_140AA8740(a_event.contactMgr, a_event.bodies[1], *a_event.bodies[1]->simulationIsland, { 0 });
+				if (ShouldPreventAttackPushing(target, attacker) && a_event.bodies[0]->simulationIsland) {
+					a_event.bodies[0]->responseModifierFlags |= 1;  //MASS_SCALING = 1
+					SetInvMassScalingForContact_140AA8740(a_event.contactMgr, a_event.bodies[0], *a_event.bodies[0]->simulationIsland, { 0 });
 				}
 			}
 		}
