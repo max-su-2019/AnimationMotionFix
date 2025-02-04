@@ -20,16 +20,23 @@ To enable this fix, you need to have setting `EnablePitchTranslationFix` value b
  ```  
 <br>
 
- ### Tweak - Disable attack magnetism effect
-The vanilla game engine has applied some kind of attack magnetism affect on an attack animation motion driven actor which would caused the actors animation root motion quantity be cleared to zero when it collided with it combat target. As a result, the actors attack animations would lost displacement and get stuck in place after collided with another actor in combat. It might be all right for the vanilla attack animations, but doesn't work well when combining with those modern action game style mod.
-To disable actors attack magnetism effect and prevent motion stuck situation, you need to have these settings value be true in "AnimationMotionFix.ini".
+ ### Tweak - Disable Player Rotation Magnetism effect
+The vanilla game engine has applied some kind of rotation magnetism effect for player character in combat, it would continually adjust the player rotation motion value each frame in order to trace an enemy, It might not works well with those modern action combat mods, especially with TDM installed. To disable this effect, you need to have setting `DisablePlayerRotationMagnetism` value be true in "AnimationMotionFix.ini".
 ```ini
 [Tweak]
 DisablePlayerRotationMagnetism = true
+```
+<br>  
 
+ ### Tweak - Disable Attack Movement Magnetism effect
+The vanilla game engine has applied some kind of movement magnetism affect on an attack animation motion driven actor which would caused the actors animation root motion value be cleared to zero when it collided with the combat target. As a result, the actors attack animations would lost displacement and get stuck in place after collided with another actor in combat. It might be all right for the vanilla attack animations, but might not works well when combining with those modern action combat mods.
+To disable actors attack magnetism effect and prevent motion stuck situation, you need to have setting `DisablePlayerMovementMagnetism` & `DisableNpcMovementMagnetism` value be true in "AnimationMotionFix.ini".
+```ini
+[Tweak]
 DisablePlayerMovementMagnetism = true
-
 DisableNpcMovementMagnetism = true
 ```
 
-Be notice that NPC would able to push their combat target away during root motion attacking if you have `DisableNpcMovementMagnetism` setting set to true.
+## Requirements
+- [Address Library for SKSE Plugins](https://www.nexusmods.com/skyrimspecialedition/mods/32444)
+
