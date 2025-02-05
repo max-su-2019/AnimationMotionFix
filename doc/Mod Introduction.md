@@ -5,7 +5,7 @@
 
 ## Mod Features
 
-### Fix - Fix NPC pitch angle translation 
+### Bug Fix - Fix NPC pitch angle translation 
 The vanilla game engine has used a wrong method to compute NPCs animation motion when NPCs were on ground(not flying), it has taken consideration of the NPCs pitch angle offset and transferred the displacement amount from Y axis to Z axis, thus NPCs Y axis displacement would got reduced in some degree that proportional with their pitch angle offset.
 ![image1](./Slide1.png)
 ![image2](./Slide2.png)
