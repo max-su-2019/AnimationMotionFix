@@ -67,6 +67,11 @@ namespace AMF
 
 	bool AttackMagnetismHandler::ShouldDisableMovementMagnetism(RE::Actor* a_actor)
 	{
+		bool bForceMoveMagnetism = false;
+		if (a_actor->GetGraphVariableBool("AMF_bForceMoveMagnetism", bForceMoveMagnetism) && bForceMoveMagnetism) {
+			return false;
+		}
+
 		auto settings = AMFSettings::GetSingleton();
 		return (a_actor->IsPlayerRef() && settings->disablePlayerMovementMagnetism) || (!a_actor->IsPlayerRef() && settings->disableNpcMovementMagnetism);
 	}
