@@ -6,22 +6,28 @@ namespace AMF
 	inline bool IsMovementAnimationDriven_1405E3250(RE::Actor* a_actor)
 	{
 		using func_t = decltype(&IsMovementAnimationDriven_1405E3250);
-		REL::Relocation<func_t> func{ RELOCATION_ID(36487, 0) };
+		static REL::Relocation<func_t> func{ REL::VariantID(36487, 37486, 0x5EB8F0) };
 		return func(a_actor);
 	}
 
 	inline RE::hkContactPoint* GetContactPoint_140A9ED70(RE::hkpSimpleConstraintContactMgr* a_mgr, uint16_t a_contactPointIds)
 	{
 		using func_t = decltype(&GetContactPoint_140A9ED70);
-		REL::Relocation<func_t> func{ RELOCATION_ID(61252, 0) };
+		static REL::Relocation<func_t> func{ REL::VariantID(61252, 62142, 0xAD9770) };
 		return func(a_mgr, a_contactPointIds);
 	}
 
 	inline void SetInvMassScalingForContact_140AA8740(RE::hkpSimpleConstraintContactMgr* a_mgr, RE::hkpRigidBody* a_body, RE::hkpConstraintOwner& a_constraintOwner, const RE::hkVector4& a_factor)
 	{
 		using func_t = decltype(&SetInvMassScalingForContact_140AA8740);
-		REL::Relocation<func_t> func{ RELOCATION_ID(61388, 0) };
+		static REL::Relocation<func_t> func{ REL::VariantID(61388, 62282, 0xAE3140) };
 		return func(a_mgr, a_body, a_constraintOwner, a_factor);
+	}
+
+	inline bool IsAllowRotation(RE::Actor* a_actor)
+	{
+		bool result = false;
+		return a_actor->GetGraphVariableBool("bAllowRotation", result) && result;
 	}
 
 	bool FixPitchTransHandler::RevertPitchRotation(RE::Actor* a_actor, RE::NiPoint3& a_translation)
@@ -29,19 +35,16 @@ namespace AMF
 		if (!a_actor)
 			return false;
 
-		if (a_actor->GetSitSleepState() != RE::SIT_SLEEP_STATE::kNormal)
+		const auto actorState = a_actor->AsActorState();
+		if (actorState->GetSitSleepState() != RE::SIT_SLEEP_STATE::kNormal || actorState->IsFlying())
 			return false;
-
-		if (a_actor->IsFlying()) {
-			return false;
-		}
 
 		bool bIsSynced = false;
 		if (a_actor->GetGraphVariableBool(RE::FixedStrings::GetSingleton()->bIsSynced, bIsSynced) && bIsSynced) {
 			return false;
 		}
 
-		if (IsMovementAnimationDriven_1405E3250(a_actor) && (a_actor->IsAnimationDriven() || a_actor->IsAllowRotation())) {
+		if (IsMovementAnimationDriven_1405E3250(a_actor) && (a_actor->IsAnimationDriven() || IsAllowRotation(a_actor))) {
 			auto pitchAngle = a_actor->data.angle.x;
 			if (std::abs(pitchAngle) > 1.57079638f) {
 				ERROR("Gimbal Lock Occured When Revert Pitch Rotation!");
@@ -95,8 +98,8 @@ namespace AMF
 	bool PushCharacterHandler::ShouldPreventAttackPushing(RE::Actor* a_pusher, RE::Actor* a_target)
 	{
 		if (a_pusher && AttackMagnetismHandler::ShouldDisableMovementMagnetism(a_pusher) &&
-			a_pusher->IsAttacking() && IsMovementAnimationDriven_1405E3250(a_pusher) && a_pusher->currentCombatTarget) {
-			auto combatTarg = a_pusher->currentCombatTarget.get();
+			a_pusher->IsAttacking() && IsMovementAnimationDriven_1405E3250(a_pusher) && a_pusher->GetActorRuntimeData().currentCombatTarget) {
+			auto combatTarg = a_pusher->GetActorRuntimeData().currentCombatTarget.get();
 			if (a_target && (a_target == combatTarg.get() || a_target->GetMountedBy(combatTarg))) {
 				return true;
 			}
@@ -119,10 +122,10 @@ namespace AMF
 
 	RE::Actor* PushCharacterHandler::GetActor(RE::bhkCharacterController* a_charCtrl)
 	{
-		return a_charCtrl ? GetActor(a_charCtrl->GetRigidBody()) : nullptr;
+		return a_charCtrl ? GetActor(a_charCtrl->GetBodyImpl()) : nullptr;
 	}
 
-	RE::Actor* PushCharacterHandler::GetActor(RE::hkpRigidBody* a_rigidBody)
+	RE::Actor* PushCharacterHandler::GetActor(RE::hkpWorldObject* a_rigidBody)
 	{
 		if (!a_rigidBody)
 			return nullptr;
@@ -169,6 +172,7 @@ namespace AMF
 					if (rigidBodyChar) {
 						a_input.constraints[i].velocity = { 0 };
 						WriteLocker(charCtrlPlaneLock);
+
 						charCtrlPlaneMap.emplace(rigidBodyChar, a_input.constraints[i].plane);
 					}
 				}

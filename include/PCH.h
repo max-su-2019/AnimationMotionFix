@@ -143,7 +143,7 @@ static constexpr void AllocExactSizeTrampoline(Xbyak::CodeGenerator& a_hookCode)
 {
 	a_hookCode.ready();
 
-	SKSE::AllocTrampoline(GetTrampolineBaseSize<N>() + a_hookCode.getSize());
+	//SKSE::AllocTrampoline(GetTrampolineBaseSize<N>() + a_hookCode.getSize());
 }
 
 template <std::size_t N>
