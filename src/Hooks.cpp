@@ -70,13 +70,15 @@ namespace AMF
 
 	bool AttackMagnetismHandler::ShouldDisableMovementMagnetism(RE::Actor* a_actor)
 	{
-		bool bForceMoveMagnetism = false;
-		if (a_actor->GetGraphVariableBool("AMF_bForceMoveMagnetism", bForceMoveMagnetism) && bForceMoveMagnetism) {
-			return false;
-		}
-
 		auto settings = AMFSettings::GetSingleton();
-		return (a_actor->IsPlayerRef() && settings->disablePlayerMovementMagnetism) || (!a_actor->IsPlayerRef() && settings->disableNpcMovementMagnetism);
+		bool isDisableInSetting = a_actor->IsPlayerRef() ? settings->disablePlayerMovementMagnetism : settings->disableNpcMovementMagnetism;
+		if (isDisableInSetting) {
+			bool bForceMoveMagnetism = a_actor->GetGraphVariableBool("AMF_bForceMoveMagnetism", bForceMoveMagnetism) && bForceMoveMagnetism;
+			return !bForceMoveMagnetism;
+		} else {
+			bool bForbidMoveMagnetism = a_actor->GetGraphVariableBool("AMF_bForbidMoveMagnetism", bForbidMoveMagnetism) && bForbidMoveMagnetism;
+			return bForbidMoveMagnetism;
+		}
 	}
 
 	void AttackMagnetismHandler::PlayerRotateMagnetismHook::UpdateMagnetism(RE::PlayerCharacter* a_player, float a_delta, RE::NiPoint3& a_translation, float& a_rotationZ)
