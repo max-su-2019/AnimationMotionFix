@@ -35,7 +35,17 @@ To disable actors attack magnetism effect and prevent motion stuck situation, yo
 [Tweak]
 DisablePlayerMovementMagnetism = true
 DisableNpcMovementMagnetism = true
-```
+```  
+For **New Aattack Behavior Mods**, AMF has provided two graph variable bool `AMF_bForceMoveMagnetism` & `AMF_bForbidMoveMagnetism`, 
+they allow you to override the global ini setting value in order to apply individual movement magnetism setup for some specify attack animations:
+
+ - If `DisablePlayerMovementMagnetism` is true for player or `DisableNpcMovementMagnetism` is true for npcs, 
+ AMF would also check if graph variable bool `AMF_bForceMoveMagnetism` existed and true within this actor,
+ If so, the ini setting value would be override and inverted, the move magnetism effect **would be apllied** to this actor at this moment.
+
+ - If `DisablePlayerMovementMagnetism` is false for player or `DisableNpcMovementMagnetism` is false for npcs, 
+ AMF would also check if graph variable bool `AMF_bForbidMoveMagnetism` existed and true within this actor,
+ If so, the ini setting value would be override and inverted, the move magnetism effect **would not be apllied** to this actor at this moment.
 
 ## Requirements
 - [Address Library for SKSE Plugins](https://www.nexusmods.com/skyrimspecialedition/mods/32444)
