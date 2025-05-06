@@ -1,4 +1,6 @@
 #pragma once
+#include "DKUtil/Config.hpp"
+#include "DKUtil/Utility.hpp"
 #include "RE/bhkCharRigidBodyController.h"
 #include "RE/bhkCharacterRigidBody.h"
 #include "RE/hkpCharacterRigidBodyListener.h"
@@ -182,14 +184,26 @@ namespace AMF
 		class RigidBodyPushRigidBodyHandler
 		{
 		public:
+			class AMFContactListener : public RE::hkpContactListener, public DKUtil::model::Singleton<AMFContactListener>
+			{
+			public:
+				friend DKUtil::model::Singleton<AMFContactListener>;
+
+				void ContactPointCallback(const RE::hkpContactPointEvent& a_event) override;
+
+			private:
+				AMFContactListener() = default;
+				~AMFContactListener() = default;
+			};
+
 			static void InstallHook()
 			{
 				auto& trampoline = SKSE::GetTrampoline();
-				REL::Relocation<std::uintptr_t> Base{ REL::VariantID(77306, 79186, 0xE466A0) };  //1.5.97 140DF16A0
-				PushTargetCharacter = trampoline.write_call<5>(Base.address() + REL::Relocate(0x29F, 0x2A9), Hook_PushTargetCharacter);
+				REL::Relocation<std::uintptr_t> Base1{ REL::VariantID(77306, 79186, 0xE466A0) };  //1.5.97 140DF16A0
+				PushTargetCharacter = trampoline.write_call<5>(Base1.address() + REL::Relocate(0x29F, 0x2A9), Hook_PushTargetCharacter);
 
-				REL::Relocation<std::uintptr_t> Vtbl{ RE::VTABLE_FOCollisionListener[0] };
-				ContactPointCallback = Vtbl.write_vfunc(0x0, &Hook_ContactPointCallback);
+				REL::Relocation<std::uintptr_t> Base2{ REL::VariantID(18709, 19195, 0x282DA0) };  //1.5.97 140271780
+				_AddContactListener = trampoline.write_call<5>(Base2.address() + REL::Relocate(0x183, 0x186), Hook_AddContactListener);
 
 				INFO("{} Done!", __FUNCTION__);
 			}
@@ -198,8 +212,8 @@ namespace AMF
 			static void Hook_PushTargetCharacter(RE::bhkCharacterController* a_pusher, RE::bhkCharacterController* a_target, RE::hkContactPoint* a_contactPoint);
 			static inline REL::Relocation<decltype(Hook_PushTargetCharacter)> PushTargetCharacter;
 
-			static void Hook_ContactPointCallback(RE::FOCollisionListener* a_listener, const RE::hkpContactPointEvent&);
-			static inline REL::Relocation<decltype(&RE::FOCollisionListener::ContactPointCallback)> ContactPointCallback;
+			static void Hook_AddContactListener(RE::bhkWorld* a_world, RE::hkpContactListener* a_listener);
+			static inline REL::Relocation<decltype(Hook_AddContactListener)> _AddContactListener;
 		};
 
 	private:

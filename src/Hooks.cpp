@@ -24,6 +24,29 @@ namespace AMF
 		return func(a_mgr, a_body, a_constraintOwner, a_factor);
 	}
 
+	inline void SetInvMassScalingForContact_Impl(const RE::hkpContactPointEvent& a_event, RE::hkpRigidBody* a_rigidBody, const RE::hkVector4& a_factor)
+	{
+		auto island = a_event.bodies[0]->simulationIsland;
+		if (!island->world) {
+			island = a_event.bodies[1]->simulationIsland;
+		}
+
+		if (a_event.type == RE::hkpContactPointEvent::Type::kManifold) {
+			auto old_multiThreadChecker = island->multiThreadCheck;
+			auto old_timeSinceLastHighFrequencyCheck = island->timeSinceLastHighFrequencyCheck;
+			auto old_timeSinceLastLowFrequencyCheck = island->timeSinceLastLowFrequencyCheck;
+			island->multiThreadCheck.markCount |= 0x8000u;  //hkMultiThreadCheck::disableChecks
+
+			SetInvMassScalingForContact_140AA8740(a_event.contactMgr, a_rigidBody, *island, a_factor);
+
+			island->multiThreadCheck = old_multiThreadChecker;
+			island->timeSinceLastHighFrequencyCheck = old_timeSinceLastHighFrequencyCheck;
+			island->timeSinceLastLowFrequencyCheck = old_timeSinceLastLowFrequencyCheck;
+		} else {
+			SetInvMassScalingForContact_140AA8740(a_event.contactMgr, a_rigidBody, *island, a_factor);
+		}
+	}
+
 	inline bool IsAllowRotation(RE::Actor* a_actor)
 	{
 		bool result = false;
@@ -47,14 +70,14 @@ namespace AMF
 		if (IsMovementAnimationDriven_1405E3250(a_actor) && (a_actor->IsAnimationDriven() || IsAllowRotation(a_actor))) {
 			auto pitchAngle = a_actor->data.angle.x;
 			if (std::abs(pitchAngle) > 1.57079638f) {
-				ERROR("Gimbal Lock Occured When Revert Pitch Rotation!");
-				return false;
+				return false;  //Gimbal Lock Occured
 			}
 
 			auto nonPitchTranslationY = a_translation.y / cosf(pitchAngle);
 			auto nonPitchTranslationZ = a_translation.z - nonPitchTranslationY * sinf(pitchAngle);
 			a_translation.y = nonPitchTranslationY;
 			a_translation.z = nonPitchTranslationZ;
+
 			return true;
 		}
 
@@ -225,22 +248,26 @@ namespace AMF
 		PushTargetCharacter(a_pusher, a_target, a_contactPoint);
 	}
 
-	void PushCharacterHandler::RigidBodyPushRigidBodyHandler::Hook_ContactPointCallback(RE::FOCollisionListener* a_listener, const RE::hkpContactPointEvent& a_event)
+	void PushCharacterHandler::RigidBodyPushRigidBodyHandler::Hook_AddContactListener(RE::bhkWorld* a_world, RE::hkpContactListener* a_listener)
+	{
+		_AddContactListener(a_world, AMFContactListener::GetSingleton());
+		_AddContactListener(a_world, a_listener);
+	}
+
+	void PushCharacterHandler::RigidBodyPushRigidBodyHandler::AMFContactListener::ContactPointCallback(const RE::hkpContactPointEvent& a_event)
 	{
 		auto attacker = GetActor(a_event.bodies[0]);
 		if (attacker) {
 			auto target = GetActor(a_event.bodies[1]);
-			if (target && ShouldPreventAttackPushing(attacker, target) && a_event.contactMgr && a_event.bodies[1]->simulationIsland) {
-				a_event.bodies[1]->responseModifierFlags |= 1;  //MASS_SCALING = 1
-				SetInvMassScalingForContact_140AA8740(a_event.contactMgr, a_event.bodies[1], *a_event.bodies[1]->simulationIsland, { 0 });
-				if (ShouldPreventAttackPushing(target, attacker) && a_event.bodies[0]->simulationIsland) {
-					a_event.bodies[0]->responseModifierFlags |= 1;  //MASS_SCALING = 1
-					SetInvMassScalingForContact_140AA8740(a_event.contactMgr, a_event.bodies[0], *a_event.bodies[0]->simulationIsland, { 0 });
+			if (target && ShouldPreventAttackPushing(attacker, target) && a_event.contactMgr && a_event.bodies[0]->simulationIsland && a_event.bodies[1]->simulationIsland) {
+				a_event.bodies[1]->responseModifierFlags = 1;  //MASS_SCALING = 1
+				SetInvMassScalingForContact_Impl(a_event, a_event.bodies[1], { 0 });
+				if (ShouldPreventAttackPushing(target, attacker)) {
+					a_event.bodies[0]->responseModifierFlags = 1;  //MASS_SCALING = 1
+					SetInvMassScalingForContact_Impl(a_event, a_event.bodies[0], { 0 });
 				}
 			}
 		}
-
-		ContactPointCallback(a_listener, a_event);
 	}
 
 }

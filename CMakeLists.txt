@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.21)
-project(AnimationMotionFix VERSION 1.1.4 LANGUAGES CXX)
+project(AnimationMotionFix VERSION 1.1.5 LANGUAGES CXX)
 
 # Set your project version and specify C++ standard
 set(CMAKE_CXX_STANDARD 23)
