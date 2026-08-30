@@ -1,6 +1,6 @@
 {
   "name": "animationmotionfix",
-  "version-string": "1.1.9",
+  "version-string": "1.2.0",
   "description": "Animation Motion Fix",
   "dependencies": [
     "commonlibsse-ng",
