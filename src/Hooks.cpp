@@ -8,37 +8,6 @@ namespace AMF
 		return actor && actor->IsActor() && actor->IsInitialized() && actor->Is3DLoaded();
 	}
 
-	static void SetInvMassScalingForContact_140AA8740(RE::hkpSimpleConstraintContactMgr* a_mgr, RE::hkpRigidBody* a_body, RE::hkpConstraintOwner& a_constraintOwner, const RE::hkVector4& a_factor)
-	{
-		using func_t = decltype(&SetInvMassScalingForContact_140AA8740);
-		static REL::Relocation<func_t> func{ REL::VariantID(61388, 62282, 0xAE3140) };
-		func(a_mgr, a_body, a_constraintOwner, a_factor);
-	}
-
-	// implementation of hkpAddModifierUtil::setInvMassScalingForContact not included in Skyrim exe file
-	static void SetInvMassScalingForContact_Impl(const RE::hkpContactPointEvent& a_event, RE::hkpRigidBody* a_rigidBody, const RE::hkVector4& a_factor)
-	{
-		auto island = a_event.bodies[0]->simulationIsland;
-		if (island->storageIndex == 0xFFFF) {  // hkpSimulationIsland::isFixed
-			island = a_event.bodies[1]->simulationIsland;
-		}
-
-		if (a_event.type == RE::hkpContactPointEvent::Type::kManifold) {
-			const auto old_threadID = island->multiThreadCheck.threadId;
-			const auto old_markCount = island->multiThreadCheck.markCount;
-			const auto old_stackTrace = island->multiThreadCheck.stackTraceId;
-
-			island->multiThreadCheck.markCount |= 0x8000;  //hkMultiThreadCheck::disableChecks
-			SetInvMassScalingForContact_140AA8740(a_event.contactMgr, a_rigidBody, *island, a_factor);
-
-			island->multiThreadCheck.threadId = old_threadID;
-			island->multiThreadCheck.stackTraceId = old_stackTrace;
-			island->multiThreadCheck.markCount = old_markCount;
-		} else {
-			SetInvMassScalingForContact_140AA8740(a_event.contactMgr, a_rigidBody, *island, a_factor);
-		}
-	}
-
 	bool FixPitchTransHandler::RevertPitchRotation(RE::Actor* a_actor, RE::NiPoint3& a_translation)
 	{
 		if (!AMFSettings::GetSingleton()->enablePitchTranslationFix || a_actor->IsPlayerRef())
@@ -257,27 +226,27 @@ namespace AMF
 	void PushCharacterHandler::RigidBodyPushRigidBodyHandler::Hook_ContactPointCallback(RE::FOCollisionListener* a_listener, const RE::hkpContactPointEvent& a_event)
 	{
 		const auto prop = a_event.contactPointProperties;
-		if (prop && !prop->flags.any(RE::hkContactPointMaterial::Flag::kIsDisabled) && a_event.contactMgr) {
-			const auto rigidBodyA = a_event.bodies[0];
-			const auto rigidBodyB = a_event.bodies[1];
-			const auto islandA = rigidBodyA ? rigidBodyA->simulationIsland : nullptr;
-			const auto islandB = rigidBodyB ? rigidBodyB->simulationIsland : nullptr;
+		if (!prop || prop->flags.any(RE::hkContactPointMaterial::Flag::kIsDisabled) || !a_event.contactMgr)  // || !a_event.contactPoint
+			return;
 
-			if (islandA && islandB) {
-				RE::TESObjectREFRPtr APtr(rigidBodyA->GetUserData());
-				RE::TESObjectREFRPtr BPtr(rigidBodyB->GetUserData());
+		const auto rigidBodyA = a_event.bodies[0];
+		const auto rigidBodyB = a_event.bodies[1];
+		const auto islandA = rigidBodyA ? rigidBodyA->simulationIsland : nullptr;
+		const auto islandB = rigidBodyB ? rigidBodyB->simulationIsland : nullptr;
+		if (islandA && islandB) {
+			RE::TESObjectREFRPtr APtr(rigidBodyA->GetUserData());
+			RE::TESObjectREFRPtr BPtr(rigidBodyB->GetUserData());
 
-				auto attacker = IsValidActor(APtr) ? APtr->As<RE::Actor>() : nullptr;
-				auto target = IsValidActor(BPtr) ? BPtr->As<RE::Actor>() : nullptr;
+			auto attacker = IsValidActor(APtr) ? APtr->As<RE::Actor>() : nullptr;
+			auto target = IsValidActor(BPtr) ? BPtr->As<RE::Actor>() : nullptr;
 
-				if (ShouldPreventAttackPushing(attacker, target)) {
-					rigidBodyB->responseModifierFlags |= 1;  //MASS_SCALING = 1
-					SetInvMassScalingForContact_Impl(a_event, rigidBodyB, { 0 });
+			if (ShouldPreventAttackPushing(attacker, target)) {
+				rigidBodyB->responseModifierFlags |= RE::hkpResponseModifier::Flags::kMassScaling;
+				RE::hkpAddModifierUtil::SetInvMassScalingForContact(a_event, rigidBodyB, { 0 });
 
-					if (ShouldPreventAttackPushing(target, attacker)) {
-						rigidBodyA->responseModifierFlags |= 1;
-						SetInvMassScalingForContact_Impl(a_event, rigidBodyA, { 0 });
-					}
+				if (ShouldPreventAttackPushing(target, attacker)) {
+					rigidBodyA->responseModifierFlags |= RE::hkpResponseModifier::Flags::kMassScaling;
+					RE::hkpAddModifierUtil::SetInvMassScalingForContact(a_event, rigidBodyA, { 0 });
 				}
 			}
 		}
