@@ -226,7 +226,7 @@ namespace AMF
 	void PushCharacterHandler::RigidBodyPushRigidBodyHandler::Hook_ContactPointCallback(RE::FOCollisionListener* a_listener, const RE::hkpContactPointEvent& a_event)
 	{
 		const auto prop = a_event.contactPointProperties;
-		if (!prop || prop->flags.any(RE::hkContactPointMaterial::Flag::kIsDisabled) || !a_event.contactMgr)  // || !a_event.contactPoint
+		if (!prop || prop->flags.any(RE::hkContactPointMaterial::Flag::kIsDisabled) || !a_event.contactMgr || !a_event.contactPoint)
 			return;
 
 		const auto rigidBodyA = a_event.bodies[0];
