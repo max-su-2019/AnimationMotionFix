@@ -1,10 +1,10 @@
 {
   "name": "animationmotionfix",
-  "version-string": "1.1.7",
-  "description": "Animation Motion Fix",
+  "version-string": "1.2.1",
+  "description": "",
   "dependencies": [
     "commonlibsse-ng",
     "simpleini"
   ],
-  "builtin-baseline": "14bb451131ccf6be50a63a8d9dfe7980e46b5958"
+  "builtin-baseline": "eb2d3a3279fd019cb7733072d86900d0ad2a1aef"
 }

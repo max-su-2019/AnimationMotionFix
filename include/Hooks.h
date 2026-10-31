@@ -30,6 +30,7 @@ namespace AMF
 	public:
 		static void InstallHook()
 		{
+			// checked: 1.5.97, 1.6.640, 1.6.1170, 1.7.104, VR
 			REL::Relocation<std::uintptr_t> target{ REL::VariantID(36365, 37356, 0x5E0E20), REL::Relocate(0x365, 0x3FE, 0x3B5) };  //1.5.97 1405D87F0 - 1.6.640 14060FAE0
 			auto call = Hook(stl::unrestricted_cast<std::uintptr_t>(Hook_ConvertMoveDirToTranslation), target.address() + 5);
 
@@ -60,6 +61,7 @@ namespace AMF
 			{
 				auto& trampoline = SKSE::GetTrampoline();
 
+				// checked: 1.5.97, 1.6.640, 1.6.1170, 1.7.104, VR
 				REL::Relocation<std::uintptr_t> target{ REL::VariantID(39379, 40451, 0x6BFF10), 0x42 };  //1.5.97 14069f730
 				func = trampoline.write_call<5>(target.address(), UpdateMagnetism);
 
@@ -77,9 +79,11 @@ namespace AMF
 		public:
 			static void InstallHook()
 			{
-				auto& trampoline = SKSE::GetTrampoline();
+				// checked: 1.5.97, 1.6.640, 1.6.1170, 1.7.104, VR
+				const bool ae2 = REL::Module::get().version() >= SKSE::RUNTIME_SSE_1_7_99;
+				REL::Relocation<std::uintptr_t> target{ REL::VariantID(36357, 37348, 0x5DF5E0), REL::Relocate(0x222, ae2 ? 0x20E : 0x1FB) };  //1.5.97 1405D6FB0
 
-				REL::Relocation<std::uintptr_t> target{ REL::VariantID(36357, 37348, 0x5DF5E0), REL::Relocate(0x222, 0x1FB) };  //1.5.97 1405D6FB0
+				auto& trampoline = SKSE::GetTrampoline();
 				func = trampoline.write_call<5>(target.address(), Hook_IsStartingMeleeAttack);
 
 				SKSE::log::info("{} Done!", __FUNCTION__);
@@ -102,8 +106,7 @@ namespace AMF
 		static bool ShouldPreventAttackPushing(RE::Actor* a_pusher, RE::Actor* a_target);
 		static bool ShouldPreventAttackPushing(RE::bhkCharacterController* a_pusher, RE::bhkCharacterController* a_target);
 
-		static RE::Actor* GetActor(RE::bhkCharacterController* a_charCtrl);
-		static RE::Actor* GetActor(RE::hkpWorldObject* a_rigidBody);
+		static RE::TESObjectREFRPtr GetActor(RE::bhkCharacterController* a_charCtrl);
 
 		// Prevent a proxy character controller pushing another proxy controller when performing animation dirven attacking.
 		class ProxyPushProxyHandler
@@ -113,6 +116,7 @@ namespace AMF
 			{
 				auto& trampoline = SKSE::GetTrampoline();
 
+				// checked: 1.5.97, 1.6.640, 1.6.1170, 1.7.104, VR
 				REL::Relocation<std::uintptr_t> target{ REL::VariantID(77248, 79134, 0xE44BA0), REL::Relocate(0x3F, 0x37) };  //1.5.97 140DEFBA0
 				func = trampoline.write_call<5>(target.address(), Hook_PushTargetCharacter);
 
@@ -132,6 +136,7 @@ namespace AMF
 			{
 				auto& trampoline = SKSE::GetTrampoline();
 
+				// checked: 1.5.97, 1.6.640, 1.6.1170, 1.7.104, VR
 				REL::Relocation<std::uintptr_t> target{ REL::VariantID(77244, 79130, 0xE44090), REL::Relocate(0x3CD, 0x3B1) };  //1.5.97 140DEF090
 				func = trampoline.write_call<5>(target.address(), Hook_PushTargetCharacter);
 
@@ -159,6 +164,7 @@ namespace AMF
 				REL::Relocation<std::uintptr_t> Vtbl_ProxyCtrl{ RE::VTABLE_bhkCharProxyController[0] };
 				ProcessConstraintsCallback = Vtbl_ProxyCtrl.write_vfunc(0x1, &Hook_ProcessConstraintsCallback);
 
+				// checked: 1.5.97, 1.6.640, 1.6.1170, 1.7.104, VR
 				auto& trampoline = SKSE::GetTrampoline();
 				REL::Relocation<std::uintptr_t> target{ REL::VariantID(77321, 79201, 0xE47B30), REL::Relocate(0x159, 0x147) };  //1.5.97 140DF2B30
 				UpdateForAnimationAttack = trampoline.write_call<5>(target.address(), Hook_UpdateForAnimationAttack);
@@ -183,20 +189,15 @@ namespace AMF
 		class RigidBodyPushRigidBodyHandler
 		{
 		public:
-			class AMFContactListener : public RE::hkpContactListener, public REX::Singleton<AMFContactListener>
-			{
-			public:
-				void ContactPointCallback(const RE::hkpContactPointEvent& a_event) override;
-			};
-
 			static void InstallHook()
 			{
+				// checked: 1.5.97, 1.6.640, 1.6.1170, 1.7.104, VR
 				auto& trampoline = SKSE::GetTrampoline();
 				REL::Relocation<std::uintptr_t> target1{ REL::VariantID(77306, 79186, 0xE466A0), REL::Relocate(0x29F, 0x2A9) };  //1.5.97 140DF16A0
 				PushTargetCharacter = trampoline.write_call<5>(target1.address(), Hook_PushTargetCharacter);
 
-				REL::Relocation<std::uintptr_t> target2{ REL::VariantID(18709, 19195, 0x282DA0), REL::Relocate(0x183, 0x186) };  //1.5.97 140271780
-				_AddContactListener = trampoline.write_call<5>(target2.address(), Hook_AddContactListener);
+				REL::Relocation<std::uintptr_t> Vtbl{ RE::VTABLE_FOCollisionListener[0] };
+				ContactPointCallback = Vtbl.write_vfunc(0x0, &Hook_ContactPointCallback);
 
 				SKSE::log::info("{} Done!", __FUNCTION__);
 			}
@@ -205,8 +206,8 @@ namespace AMF
 			static void Hook_PushTargetCharacter(RE::bhkCharacterController* a_pusher, RE::bhkCharacterController* a_target, RE::hkContactPoint* a_contactPoint);
 			static inline REL::Relocation<decltype(Hook_PushTargetCharacter)> PushTargetCharacter;
 
-			static void Hook_AddContactListener(RE::bhkWorld* a_world, RE::hkpContactListener* a_listener);
-			static inline REL::Relocation<decltype(Hook_AddContactListener)> _AddContactListener;
+			static void Hook_ContactPointCallback(RE::FOCollisionListener* a_listener, const RE::hkpContactPointEvent&);
+			static inline REL::Relocation<decltype(&RE::FOCollisionListener::ContactPointCallback)> ContactPointCallback;
 		};
 
 	private:
