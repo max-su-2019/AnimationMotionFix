@@ -15,7 +15,7 @@ namespace AMF
 
 		constexpr const char* section = "Tweak";
 		disablePlayerRotationMagnetism = ini.GetBoolValue(section, "DisablePlayerRotationMagnetism");
-		disablePlayerMovementMagnetism = ini.GetBoolValue(section, "DisablePlayerMovementMagnetism");
-		disableNpcMovementMagnetism = ini.GetBoolValue(section, "DisableNpcMovementMagnetism");
+		playerMovementMagnetismMode = MovMagMode(ini.GetLongValue(section, "PlayerMovementMagnetismMode"));
+		npcMovementMagnetismMode = MovMagMode(ini.GetBoolValue(section, "NpcMovementMagnetismMode"));
 	}
 }

@@ -47,18 +47,41 @@ namespace AMF
 	bool AttackMagnetismHandler::ShouldDisableMovementMagnetism(RE::Actor* a_actor)
 	{
 		auto settings = AMFSettings::GetSingleton();
-		bool enabled = a_actor->IsPlayerRef() ? settings->disablePlayerMovementMagnetism : settings->disableNpcMovementMagnetism;
-		if (enabled) {
-			bool bForceMoveMagnetism = false;
-			bForceMoveMagnetism = a_actor->GetGraphVariableBool("AMF_bForceMoveMagnetism", bForceMoveMagnetism) && bForceMoveMagnetism;
-			return !bForceMoveMagnetism;
-		} else {
-			bool bForbidMoveMagnetism = false;
-			bForbidMoveMagnetism = a_actor->GetGraphVariableBool("AMF_bForbidMoveMagnetism", bForbidMoveMagnetism) && bForbidMoveMagnetism;
-			return bForbidMoveMagnetism;
+		bool bForceMoveMagnetism = false;
+		if (a_actor->GetGraphVariableBool("AMF_bForceMoveMagnetism", bForceMoveMagnetism) && bForceMoveMagnetism) {
+			return false;
+		}
+
+		bool bForbidMoveMagnetism = false;
+		if (a_actor->GetGraphVariableBool("AMF_bForbidMoveMagnetism", bForbidMoveMagnetism) && bForbidMoveMagnetism) {
+			return true;
+		}
+
+		//Check if the AnimWarp effct of AMR plugin's enabled.
+		static auto IsAnimWarpingEnabled = [](RE::Actor* a_actor) -> bool {
+			bool bAnimationWarpingEnabled = false;
+			if (a_actor->GetGraphVariableBool("AMR_IsAnimationWarpingEnabled", bAnimationWarpingEnabled) && bAnimationWarpingEnabled)
+				return true;
+			else {
+				return false;
+			}
+		};
+
+		auto movMagMode = a_actor->IsPlayerRef() ? settings->playerMovementMagnetismMode : settings->npcMovementMagnetismMode;
+		switch (movMagMode) {
+		case MovMagMode::kGlobalEnable:
+			return false;
+
+		case MovMagMode::kDynamic:
+			return IsAnimWarpingEnabled(a_actor);
+
+		case MovMagMode::kGlobalDisable:
+			return true;
+
+		default:
+			return false;
 		}
 	}
-
 	void AttackMagnetismHandler::PlayerRotateMagnetismHook::UpdateMagnetism(RE::PlayerCharacter* a_player, float a_delta, RE::NiPoint3& a_translation, float& a_rotationZ)
 	{
 		if (!AMFSettings::GetSingleton()->disablePlayerRotationMagnetism) {
