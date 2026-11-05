@@ -21,13 +21,11 @@ SKSE_PLUGIN_QUERY(const SKSE::QueryInterface*, SKSE::PluginInfo* pluginInfo)
 
 SKSE_PLUGIN_LOAD(const SKSE::LoadInterface* skse)
 {
-	/*
 #ifndef NDEBUG
 	while (!IsDebuggerPresent()) {
 		Sleep(100);
 	}
 #endif
-*/
 
 	SKSE::Init(skse, true);
 
@@ -42,7 +40,17 @@ SKSE_PLUGIN_LOAD(const SKSE::LoadInterface* skse)
 
 	SKSE::log::info("Game version: {}", skse->RuntimeVersion());
 
-	AMF::AMFSettings::GetSingleton()->LoadSettings();
+	auto g_message = SKSE::GetMessagingInterface();
+	if (!g_message) {
+		SKSE::log::error("Messaging Interface Not Found!");
+		return false;
+	}
+
+	g_message->RegisterListener([](SKSE::MessagingInterface::Message* a_msg) {
+		if (a_msg && a_msg->type == SKSE::MessagingInterface::kPostLoad) {
+			AMF::AMFSettings::GetSingleton()->LoadSettings();
+		}
+	});
 
 	SKSE::AllocTrampoline(129);
 

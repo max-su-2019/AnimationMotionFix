@@ -19,6 +19,8 @@ namespace AMF
 
 		MovMagMode playerMovementMagnetismMode{ kDynamic };
 		MovMagMode npcMovementMagnetismMode{ kDynamic };
+
+		static bool HasAnimMotionData(const RE::hkbCharacter* a_hkbCharacter);
 	};
 	using MovMagMode = AMFSettings::MovMagMode;
 

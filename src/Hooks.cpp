@@ -57,14 +57,18 @@ namespace AMF
 			return true;
 		}
 
-		//Check if the AnimWarp effct of AMR plugin's enabled.
-		static auto IsAnimWarpingEnabled = [](RE::Actor* a_actor) -> bool {
-			bool bAnimationWarpingEnabled = false;
-			if (a_actor->GetGraphVariableBool("AMR_IsAnimationWarpingEnabled", bAnimationWarpingEnabled) && bAnimationWarpingEnabled)
-				return true;
-			else {
-				return false;
+		static auto getHkbCharacter = [](RE::Actor* actor) -> RE::hkbCharacter* {
+			if (!actor) {
+				return nullptr;
 			}
+
+			RE::BSTSmartPointer<RE::BSAnimationGraphManager> manager;
+			if (!actor->GetAnimationGraphManager(manager) || !manager || manager->graphs.empty()) {
+				return nullptr;
+			}
+
+			auto* graph = manager->graphs[0].get();
+			return graph ? &graph->characterInstance : nullptr;
 		};
 
 		auto movMagMode = a_actor->IsPlayerRef() ? settings->playerMovementMagnetismMode : settings->npcMovementMagnetismMode;
@@ -73,7 +77,10 @@ namespace AMF
 			return false;
 
 		case MovMagMode::kDynamic:
-			return IsAnimWarpingEnabled(a_actor);
+			{
+				auto hkbCharacter = getHkbCharacter(a_actor);
+				return hkbCharacter && AMFSettings::HasAnimMotionData(hkbCharacter);
+			}
 
 		case MovMagMode::kGlobalDisable:
 			return true;
